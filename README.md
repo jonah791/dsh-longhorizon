@@ -110,6 +110,12 @@ id 碰撞 / 不可写路径 / 派生会话）与 4 组**对照组**（不是只�
 **判据**：① 行为级——`longhorizon_status` 返回三层计数 + 明细；② **注入级**——后续请求尾部出现 `【长时域】…` 一行（去重键防刷屏）。
 **回退**：① `git revert` + 重建 + 预检重启；② patch 行 `disabled: true`；③ 台账是独立 JSON 文件，**停用不丢数据**。
 
+## 相关文档
+
+- ⚠ **本插件暂无 `semantic.md`**（未建语义文档）——契约以上面各节与源码为准；补文档是待办。
+- 中心仓：[alice-digital-life](https://github.com/jonah791/alice-digital-life)（本插件归 **治理层**）
+- 相关技能：`longhorizon-ledger`（本插件的使用判据与与任务板的分工）
+
 ## License
 
 MIT © jonah791
