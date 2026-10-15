@@ -1,8 +1,25 @@
+<!--
+  DSH 插件生态公约声明（plugin-ecosystem-convention · 组合优先/声明清晰/兼容优先）
+  purpose: 长时域未完成项台账 + 每轮一行读数注入（对抗「低进度高剩余」的提前收工）
+  inject: 'tools','agents'
+  tools: longhorizon_status,longhorizon_open,longhorizon_update,longhorizon_close
+  runtime: host-only
+  envDeps: 无
+  boundary: 只送读数——**不排序、不推荐、不自动执行**（决策归主体）；写路径绝不退化（台账损坏时拒绝写而非以空台账继续）
+  compat: cordis ^4.0.1 / schemastery ^3.18.1-rc.1 / dsh-tools >=0.1.0-rc.6
+-->
 # dsh-longhorizon
 
-长时域未完成项台账 + 每轮一行读数注入。
+<p align="center">
+  <a href="https://github.com/jonah791/dsh-longhorizon"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="version"></a>
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="license">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6" alt="TypeScript">
+  <img src="https://img.shields.io/badge/tests-42%20passed-brightgreen" alt="tests">
+</p>
 
-## 为什么存在（论文依据）
+**一句话**：一个**独立落盘的未完成项台账**，加**每轮一行**的读数注入——专门对抗「活没干完、额度还剩一半」这种长时域失败。
+
+**为什么值得用**：论文 SkillHorizon 实测的失败主形状不是「做不动」，是**提前收工**——1M 参考工作量档位下 **54.0%** 的失败终局是「完成 <25% 局部目标 ∧ 还剩 >50% 工具额度」，而**中性提醒不改变行为**（GPT 收到确认后仍然再交一次 final，90% 额度剩余）。⇒ 结论：**提醒无效，除非读数出现在执行路径上**。本插件就做这一件事。
 
 [SkillHorizon](https://arxiv.org/abs/2610.14966v1)（arXiv:2610.14966v1）在 5 个模型 × 1,050 个任务上实测：
 
@@ -55,3 +72,48 @@ pnpm test        # 42 条
 id 碰撞 / 不可写路径 / 派生会话）与 4 组**对照组**（不是只喂坏样本）。
 
 尸体对照实测：把「拒绝空 next」护栏改坏 ⇒ **恰好红 1 条**（正是该护栏），恢复后 42/42 全绿。
+
+## 快速开始
+
+**1) 装依赖**：
+
+```jsonc
+"dsh-longhorizon": "link:E:/alice/self-plugins/dsh-longhorizon"
+```
+
+**2) 挂组合**（⚠ 需 agent 作用域——注入要落到具体会话）：
+
+```yaml
+- id: longhorizon
+  name: dsh-longhorizon
+```
+
+**3) 30 秒验证**：`longhorizon_status` → 应返回「未完成 N · 可推 X · 等外部 Y · 问题 Z · 最老 Wd」+ 明细；随后每一轮请求的**上下文尾部**应出现同样格式的一行（这就是「读数出现在执行路径上」）。
+
+## 配置
+
+| 项 | 默认 | 说明 |
+|---|---|---|
+| `ledgerPath` | `<DSH_HOME>/longhorizon/ledger.json` | 台账落点（**独立落盘**，压缩不影响） |
+| （注入开关等见源码 `Config`） | — | 注入去重键 = 会话 + 小时 + 内容指纹 |
+
+## 落盘与自证
+
+| 文件 | 何时写 | 内容 |
+|---|---|---|
+| `<DSH_HOME>/longhorizon/ledger.json` | 每次 `_open` / `_update` / `_close` | 全部未完成项（含 `next` 下一步动作与 `refs` 产物指针） |
+
+**一条命令答五问**：`longhorizon_status` 一屏给出「还剩几件 / 几件我能推 / 几件等外部 / 最老多久 / 每条的下一步」。
+
+## 生效判据与回退
+
+**判据**：① 行为级——`longhorizon_status` 返回三层计数 + 明细；② **注入级**——后续请求尾部出现 `【长时域】…` 一行（去重键防刷屏）。
+**回退**：① `git revert` + 重建 + 预检重启；② patch 行 `disabled: true`；③ 台账是独立 JSON 文件，**停用不丢数据**。
+
+## License
+
+MIT © jonah791
+
+---
+
+本插件属于**爱丽丝 DSH 自研插件生态**（[alice-digital-life](https://github.com/jonah791/alice-digital-life) · 73 个插件 · 8 个模块）：单一职责、独立仓库、独立可用。
